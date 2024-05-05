@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Test</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h2>Select Amount to Pay</h2>
+    <select id="amountSelect">
+        <option value="10000">₹100</option>
+        <option value="20000">₹200</option>
+        <option value="50000">₹500</option>
+        <option value="100000">₹1000</option>
+    </select>
+    <button id="createOrder">Pay Now</button>
+
+    <script>
+        document.getElementById('createOrder').addEventListener('click', function() {
+            var amount = document.getElementById('amountSelect').value;
+            fetch('http://localhost:3000/api/payments/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ amount: amount })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(order => {
+                // Razorpay payment options
+                var options = {
+                    "key": "rzp_test_RPhITB6jQsJDz7", // Enter your Key ID here
+                    "amount": order.amount, // Amount is in currency subunits (e.g., paise)
+                    "currency": "INR",
+                    "name": "Your Company Name",
+                    "description": "Test Transaction",
+                    "image": "https://example.com/your_logo.jpg",
+                    "order_id": order.id, // Pass the actual `id` obtained from the server
+                    "handler": function (response){
+                        // Payment was successful, you can call your server to verify the payment
+                        console.log(response);
+                    },
+                    "prefill": {
+                        "name": "Test Name",
+                        "email": "test@example.com",
+                        "contact": "9999999999"
+                    },
+                    "theme": {
+                        "color": "#3399cc"
+                    }
+                };
+                var paymentWindow = new Razorpay(options);
+                paymentWindow.open();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
